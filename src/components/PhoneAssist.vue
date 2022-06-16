@@ -6,8 +6,8 @@
     </el-breadcrumb>
     <el-row><br></el-row>
     <el-row>
-      <el-col :span="4"><el-button type="primary" @click="translationStart">开始对话</el-button>  <i class="el-icon-microphone"></i>
-      <el-col :span="4"></el-col></el-col>
+      <el-col :span="4"><el-button type="primary" @click="translationStart">开始对话</el-button>  <i class="el-icon-microphone"></i></el-col>
+      <el-col :span="4"><el-button type="danger" @click="translationEnd">结束对话</el-button></el-col>
       <el-col :span="4"></el-col>
       <el-col :span="4"></el-col>
       <el-col :span="4"></el-col>
@@ -16,13 +16,13 @@
     <br>
     <div class="communicate_box">
       <el-scrollbar style="height:100%">
-      <el-card class="box-card">
-        <el-card class="box-card" v-for="item in list" :key="item">
-          <div v-for="o in item" :key="o" class="text item">
-            {{'列表内容 ' + o }}
-          </div>
+        <el-card class="box-card">
+          <el-card class="box-card" v-for="item in list" :key="item">
+            <div class="text item">
+              {{item}}
+            </div>
+          </el-card>
         </el-card>
-      </el-card>
       </el-scrollbar>
     </div>
   </div>
@@ -30,55 +30,40 @@
 
 <script>
 import IatRecorder from '@/assets/js/IatRecorder.js'
-
-// import TransWorker from '../../../assets/js/transcode.worker.js'
-import Enc from 'enc'
-import VConsole from 'vconsole'
-
-// let transWorker = new TransWorker()
-// console.log(transWorker)
-
-const iatRecorder = new IatRecorder('en_us', 'mandarin', '5f27b6a9')//
+import axios from "axios";
+var text_list = []
+//初始化iatRecorder
+const iatRecorder = new IatRecorder({
+  accent:'mandarin',
+  onTextChange: function (text) {
+    if (text.length < 3)
+      return
+    text_list.push(text)
+    axios.get('http://localhost:8989/recommend?str=' + text, {
+      headers: {
+        'token': localStorage.getItem('token')
+      }
+    }).then(res => {
+      if (res.data.code === 200) {
+        console.log(res.data.data.content);
+      }
+    })
+  }})
 
 export default {
   name: 'PhoneAssist',
   data () {
     return {
-      list: [
-        {
-          name: 'zjh',
-          para: 'xsaxsaxsa'
-        }, {
-          xsax: 'xsa',
-          xsa: '111'
-        }, {
-          xsax: 'xsa',
-          xsa: '111'
-        }, {
-          xsax: 'xsa',
-          xsa: '111'
-        }, {
-          xsax: 'xsa',
-          xsa: '111'
-        }, {
-          xsax: 'xsa',
-          xsa: '111'
-        }
-      ]
+      list: text_list,
     }
   },
-  mounted() {
-  },
-  created() {
-  },
   methods: {
-
     translationStart() {
-
+      //启动语音识别
       iatRecorder.start()
-
     },
     translationEnd() {
+      //结束对话
       iatRecorder.stop()
     }
   },
